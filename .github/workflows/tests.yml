@@ -1,0 +1,34 @@
+name: tests
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  linters:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        just-trigger: [ format, lint, mypy ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: extractions/setup-just@v2
+      - uses: astral-sh/setup-uv@v4
+      - run: uv python install 3.12
+      - run: uv sync --all-extras --dev
+      - run: just ${{ matrix.just-trigger }}
+
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: extractions/setup-just@v2
+      - uses: astral-sh/setup-uv@v4
+      - run: uv python install ${{ matrix.python-version }}
+      - run: uv sync --all-extras --dev
+      - run: just tests
