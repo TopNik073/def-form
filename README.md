@@ -5,8 +5,7 @@ Python function definition formatter
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![PyPI](https://img.shields.io/pypi/v/def-form.svg)](https://pypi.python.org/pypi/def-form)
 [![PyPI](https://img.shields.io/pypi/dm/def-form.svg)](https://pypi.python.org/pypi/def-form)
-[![Coverage Status](https://coveralls.io/repos/github/TopNik073/def-form/badge.svg?branch=polish-docs)](https://coveralls.io/github/TopNik073/def-form?branch=polish-docs)
-
+[![Coverage Status](https://coveralls.io/repos/github/TopNik073/def-form/badge.svg?branch=init)](https://coveralls.io/github/TopNik073/def-form?branch=init)
 ## Overview
 
 `def-form` is a code formatting tool that focuses specifically on Python function definitions. It helps maintain consistent formatting of function signatures by automatically organizing arguments vertically when they exceed specified thresholds.
