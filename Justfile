@@ -17,4 +17,4 @@ fix:
     uv run ruff check --fix --unsafe-fixes {{ SOURCE_PATH }}
 
 tests:
-    uv run pytest --cov=probirka --cov-report lcov:tests.lcov tests/
+    uv run pytest --cov=def-form --cov-report lcov:tests.lcov tests/

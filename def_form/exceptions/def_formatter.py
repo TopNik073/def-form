@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from .base import BaseDefFormException
+from def_form.exceptions.base import BaseDefFormException
 
 
 @dataclass

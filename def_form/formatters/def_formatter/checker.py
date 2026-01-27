@@ -16,10 +16,8 @@ class DefChecker(DefBase, CSTVisitor):
             filepath=filepath, max_def_length=max_def_length, max_inline_args=max_inline_args, indent_size=indent_size
         )
 
-    def leave_FunctionDef(self, original_node: FunctionDef) -> FunctionDef:
+    def leave_FunctionDef(self, original_node: FunctionDef) -> None:
         analysis = self.analyze_function(original_node)
 
         if analysis.issues:
             self.issues.extend(analysis.issues)
-
-        return original_node

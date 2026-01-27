@@ -134,10 +134,12 @@ toml = [
 
 [[package]]
 name = "def-form"
+version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
     { name = "libcst" },
+    { name = "tomli" },
 ]
 
 [package.dev-dependencies]
@@ -152,6 +154,7 @@ dev = [
 requires-dist = [
     { name = "click", specifier = ">=8.2.1" },
     { name = "libcst", specifier = ">=1.8.2" },
+    { name = "tomli", specifier = ">=2.4.0" },
 ]
 
 [package.metadata.requires-dev]

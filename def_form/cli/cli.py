@@ -14,7 +14,7 @@ from def_form.formatters import DefManager
 @click.option('--config', type=str, default=None, help='path to pyproject.toml')
 @click.option('--exclude', multiple=True, help='paths to exclude from formatting')
 @click.option('--show-skipped', is_flag=True, help='show skipped files/directories')
-def format(
+def format(  # noqa: PLR0913
     path: str,
     max_def_length: int | None,
     max_inline_args: int | None,
@@ -49,7 +49,7 @@ def format(
 @click.option('--config', type=str, default=None, help='path to pyproject.toml')
 @click.option('--exclude', multiple=True, help='paths to exclude from checking')
 @click.option('--show-skipped', is_flag=True, help='show skipped files/directories')
-def check(
+def check(  # noqa: PLR0913
     path: str,
     max_def_length: int | None,
     max_inline_args: int | None,

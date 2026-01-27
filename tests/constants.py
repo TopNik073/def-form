@@ -2,7 +2,7 @@ from pathlib import Path
 
 MAX_DEF_LENGTH = 100
 MAX_INLINE_ARGS = 2
-EXPECTED_TOTAL_ISSUES = 23
+EXPECTED_TOTAL_ISSUES = 62
 
 src_path = Path(__file__).resolve().parent
 

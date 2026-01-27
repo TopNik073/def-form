@@ -5,7 +5,7 @@ from def_form.cli.cli import format
 
 
 @click.group(name='def-form')
-def main():
+def main() -> None:
     click.help_option()
 
 

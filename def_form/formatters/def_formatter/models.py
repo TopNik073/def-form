@@ -17,8 +17,8 @@ class FunctionAnalysis:
     line_no: int | None = None
     pos: CodeRange | None = None
     node: FunctionDef | None = None
-    issues: list[BaseDefFormException] = None
+    issues: list[BaseDefFormException] | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.issues is None:
             self.issues = []

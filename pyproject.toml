@@ -34,6 +34,7 @@ classifiers = [
 dependencies = [
     "click>=8.2.1",
     "libcst>=1.8.2",
+    "tomli>=2.4.0",
 ]
 
 [build-system]

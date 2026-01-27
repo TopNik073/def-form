@@ -1,11 +1,14 @@
 import re
+from pathlib import Path
+from typing import cast
 
-from libcst import FunctionDef
+from libcst import FunctionDef, Comma
 from libcst import MetadataDependent
 from libcst import Module
 from libcst import Param
 from libcst import ParenthesizedWhitespace
 from libcst import SimpleWhitespace
+from libcst.matchers import BaseParenthesizableWhitespace
 from libcst.metadata import PositionProvider
 
 from def_form.exceptions.base import BaseDefFormException
@@ -18,16 +21,18 @@ from def_form.formatters.def_formatter.models import FunctionAnalysis
 class DefBase(MetadataDependent):
     METADATA_DEPENDENCIES = (PositionProvider,)
 
-    def __init__(self, filepath: str, max_def_length: int | None, max_inline_args: int | None, indent_size: int = 4):
+    def __init__(
+        self, filepath: str, max_def_length: int | None, max_inline_args: int | None, indent_size: int | None = None
+    ):
         super().__init__()
         self.filepath = filepath
         self.max_def_length = max_def_length
         self.max_inline_args = max_inline_args
-        self.indent_size = indent_size
+        self.indent_size = indent_size if indent_size is not None else 4
         self.issues: list[BaseDefFormException] = []
 
     def _check_issues(self, line_length: int, line_no: int, arg_count: int) -> list[BaseDefFormException]:
-        issues = []
+        issues: list[BaseDefFormException] = []
 
         if self.max_def_length and line_length > self.max_def_length:
             issues.append(
@@ -62,7 +67,7 @@ class DefBase(MetadataDependent):
         pos = self.get_metadata(PositionProvider, node)
 
         try:
-            with open(self.filepath, encoding='utf-8') as f:
+            with Path.open(Path(self.filepath), encoding='utf-8') as f:
                 lines = f.readlines()
         except (OSError, UnicodeDecodeError):
             return False
@@ -79,7 +84,7 @@ class DefBase(MetadataDependent):
         return False
 
     def _get_params_list(self, node: FunctionDef) -> list[Param]:
-        params = []
+        params: list[Param] = []
         params.extend(node.params.params)
 
         if isinstance(node.params.star_arg, Param):
@@ -92,7 +97,7 @@ class DefBase(MetadataDependent):
 
         return params
 
-    def has_correct_multiline_params_format(self, node: FunctionDef) -> bool:
+    def has_correct_multiline_params_format(self, node: FunctionDef) -> bool:  # noqa: PLR0911, PLR0912
         ws = node.whitespace_before_params
         if not isinstance(ws, ParenthesizedWhitespace):
             return False
@@ -114,10 +119,10 @@ class DefBase(MetadataDependent):
 
         for param in all_params[:-1]:
             comma = param.comma
-            if comma is None:
+            if not isinstance(comma, Comma):
                 return False
 
-            ws_after = comma.whitespace_after
+            ws_after = cast(BaseParenthesizableWhitespace, comma.whitespace_after)
             if not isinstance(ws_after, ParenthesizedWhitespace):
                 return False
 
@@ -132,10 +137,10 @@ class DefBase(MetadataDependent):
 
         last_param = all_params[-1]
         comma = last_param.comma
-        if comma is None:
+        if not isinstance(comma, Comma):
             return False
 
-        ws_after = comma.whitespace_after
+        ws_after = cast(BaseParenthesizableWhitespace, comma.whitespace_after)
         if not isinstance(ws_after, ParenthesizedWhitespace):
             return False
 
@@ -145,10 +150,7 @@ class DefBase(MetadataDependent):
         if not isinstance(ws_after.last_line, SimpleWhitespace):
             return False
 
-        if ws_after.last_line.value != '':
-            return False
-
-        return True
+        return ws_after.last_line.value == ''
 
     def _count_arguments(self, node: FunctionDef) -> int:
         count = len(node.params.params)
@@ -193,14 +195,13 @@ class DefBase(MetadataDependent):
 
         if self.is_single_line_function(node):
             issues = self._check_issues(line_length, line_no, arg_count)
-        else:
-            if not self.has_correct_multiline_params_format(node):
-                issues.append(
-                    InvalidMultilineParamsIndentException(
-                        path=f'{self.filepath}:{line_no}',
-                        message=f'Invalid multiline function parameters indentation (expected {self.indent_size} spaces)',
-                    )
+        elif not self.has_correct_multiline_params_format(node):
+            issues.append(
+                InvalidMultilineParamsIndentException(
+                    path=f'{self.filepath}:{line_no}',
+                    message=f'Invalid multiline function parameters indentation (expected {self.indent_size} spaces)',
                 )
+            )
 
         has_issues = bool(issues)
 

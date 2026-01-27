@@ -1,3 +1,5 @@
+from typing import Any, cast
+
 from libcst import Comma
 from libcst import Comment
 from libcst import CSTTransformer
@@ -12,14 +14,16 @@ from def_form.formatters.def_formatter.base import DefBase
 
 
 class DefFormatter(DefBase, CSTTransformer):
-    def __init__(self, filepath: str, max_def_length: int | None, max_inline_args: int | None, indent_size: int = 4):
+    def __init__(
+        self, filepath: str, max_def_length: int | None, max_inline_args: int | None, indent_size: int | None = None
+    ):
         super().__init__(filepath, max_def_length, max_inline_args)
-        self.indent_size = indent_size
+        self.indent_size = indent_size if indent_size is not None else 4
 
-    def _is_valid_param(self, param) -> bool:
+    def _is_valid_param(self, param: Any) -> bool:
         return isinstance(param, Param)
 
-    def _extract_comment_from_whitespace(self, ws) -> TrailingWhitespace | None:
+    def _extract_comment_from_whitespace(self, ws: Any) -> TrailingWhitespace | None:
         if isinstance(ws, TrailingWhitespace):
             return ws
         if isinstance(ws, ParenthesizedWhitespace) and isinstance(ws.first_line, TrailingWhitespace):
@@ -76,12 +80,16 @@ class DefFormatter(DefBase, CSTTransformer):
         return param.with_changes(comma=new_comma, whitespace_after_param=SimpleWhitespace(''))
 
     def _collect_all_params(self, node: FunctionDef) -> list[Param]:
-        all_params = list(node.params.params)
+        all_params: list[Param] = list(node.params.params)
+
         if self._is_valid_param(node.params.star_arg):
-            all_params.append(node.params.star_arg)
+            all_params.append(cast(Param, node.params.star_arg))
+
         all_params.extend(node.params.kwonly_params)
+
         if self._is_valid_param(node.params.star_kwarg):
-            all_params.append(node.params.star_kwarg)
+            all_params.append(cast(Param, node.params.star_kwarg))
+
         return all_params
 
     def _restore_param_groups(self, formatted_params: list[Param], node: FunctionDef) -> tuple:

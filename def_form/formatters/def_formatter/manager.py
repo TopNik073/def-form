@@ -1,5 +1,5 @@
 import os
-import tomllib
+import tomli
 from collections.abc import Generator
 from pathlib import Path
 
@@ -13,7 +13,7 @@ from def_form.utils.find_pyproject import find_pyproject_toml
 
 
 class DefManager:
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         path: str,
         excluded: tuple[str, ...] | None = None,
@@ -51,19 +51,17 @@ class DefManager:
         self.max_def_length = max_def_length
         self.max_inline_args = max_inline_args
         self.indent_size = indent_size
-        self.is_config_found = bool(config)
 
         if not config:
             config = find_pyproject_toml()
-            self.is_config_found = bool(config)
 
         config_excluded: list[str] = []
 
-        if self.is_config_found and config:
+        if config:
             try:
-                with open(config, 'rb') as f:
+                with Path.open(Path(config), 'rb') as f:
                     click.secho(f'Using config: {config}', fg='yellow')
-                    config_data = tomllib.load(f)
+                    config_data = tomli.load(f)
 
                 config_def = config_data.get('tool', {}).get('def-form', {})
 
@@ -82,7 +80,7 @@ class DefManager:
                 )
 
                 config_excluded = config_def.get('exclude', [])
-            except (FileNotFoundError, tomllib.TOMLDecodeError) as e:
+            except (FileNotFoundError, tomli.TOMLDecodeError) as e:
                 click.secho(f'Error loading config {config}: {e}', fg='red')
                 self.is_config_found = False
 
@@ -160,7 +158,7 @@ class DefManager:
         processor_class: type[DefFormatter] | type[DefChecker],
     ) -> tuple[cst.Module | None, list[BaseDefFormException]]:
         try:
-            with open(filepath, encoding='utf-8') as f:
+            with Path.open(Path(filepath), encoding='utf-8') as f:
                 code = f.read()
         except (OSError, UnicodeDecodeError) as e:
             click.secho(f'Error reading {filepath}: {e}', fg='red')
@@ -174,9 +172,8 @@ class DefManager:
             if issubclass(processor_class, DefFormatter):
                 new_tree = wrapper.visit(processor)
                 return new_tree, processor.issues
-            else:
-                wrapper.visit(processor)
-                return None, processor.issues
+            wrapper.visit(processor)
+            return None, processor.issues
 
         except cst.ParserSyntaxError as e:
             click.secho(f'Syntax error in {filepath}: {e}', fg='red')
@@ -198,7 +195,7 @@ class DefManager:
 
             if new_tree is not None:
                 try:
-                    with open(write_to or filepath, 'w', encoding='utf-8') as f:
+                    with Path.open(Path(write_to or filepath), 'w', encoding='utf-8') as f:
                         f.write(new_tree.code)
                 except OSError as e:
                     click.secho(f'Error writing {filepath}: {e}', fg='red')
