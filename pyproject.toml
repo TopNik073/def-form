@@ -1,0 +1,158 @@
+[project]
+name = "def-form"
+version = "0.1.0"
+description = "Formatter for functions"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [
+    { name = "TopNik073" },
+]
+keywords = [
+    "code-formatting",
+    "docstrings",
+    "formatter",
+    "functions",
+    "python",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Code Generators",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+dependencies = [
+    "click>=8.2.1",
+    "libcst>=1.8.2",
+    "tomli>=2.4.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.11.4,<0.12.0",
+    "mypy>=1.19.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+def-form = "def_form.cli.main:main"
+
+[project.urls]
+Homepage = "https://github.com/TopNik073/def-form"
+Repository = "https://github.com/TopNik073/def-form"
+Issues = "https://github.com/TopNik073/def-form/issues"
+
+[tool.def-form]
+max_def_length = 100
+max_inline_args = 2
+indent_size = 4
+exclude = [
+    ".venv/",
+    "build/",
+]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+follow_imports = "silent"
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+no_implicit_reexport = true
+exclude = [
+    ".venv/",
+    "tests/mock_data/example.py",
+    "tests/mock_data/expected.py",
+]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+exclude = [
+    ".venv/",
+    "tests/mock_data/example.py",
+    "tests/mock_data/expected.py",
+]
+lint.flake8-tidy-imports.ban-relative-imports = "all"
+lint.mccabe.max-complexity = 20
+lint.select = [
+    "F", # Pyflakes
+    # "E/W", # pycodestyle
+    "C90", # mccabe
+    # "I", # isort
+    # "N", # pep8-naming
+    # "D", # pydocstyle
+    "UP", # pyupgrade
+    "YTT", # flake8-2020
+    # "ANN", # flake8-annotations
+    # "ASYNC", # flake8-async
+    # "TRIO", # flake8-trio
+    # "S", # flake8-bandit
+    # "BLE", # flake8-blind-except
+    # "FBT", # flake8-boolean-trap
+    "B", # flake8-bugbear
+    # "A", # flake8-builtins
+    # "COM", # flake8-commas
+    # "CPY", # flake8-copyright
+    "C4", # flake8-comprehensions
+    # "DTZ", # flake8-datetimez
+    "T10", # flake8-debugger
+    # "DJ", # flake8-django
+    # "EM", # flake8-errmsg
+    # "EXE", # flake8-executable
+    # "FA", # flake8-future-annotations
+    #  "ISC", # flake8-implicit-str-concat
+    # "ICN", # flake8-import-conventions
+    "G", # flake8-logging-format
+    "INP", # flake8-no-pep420
+    # "PIE", # flake8-pie
+    "T20", # flake8-print
+    # "PYI", # flake8-pyi
+    # "PT", # flake8-pytest-style
+    # "Q", # flake8-quotes
+    "RSE", # flake8-raise
+    "RET", # flake8-return
+    "SLF", # flake8-self
+    # "SLOT", # flake8-slots
+    "SIM", # flake8-simplify
+    "TID", # flake8-tidy-imports
+    # "TCH", # flake8-type-checking
+    # "INT", # flake8-gettext
+    # "ARG", # flake8-unused-arguments
+    "PTH", # flake8-use-pathlib
+    # "TD", # flake8-todos
+    # "FIX", # flake8-fixme
+    "ERA", # eradicate
+    # "PD", # pandas-vet
+    # "PGH", # pygrep-hooks
+    "PL", # Pylint
+    # "TRY", # tryceratops
+    # "FLY", # flynt
+    # "NPY", # NumPy-specific rules
+    # "AIR", # Airflow
+    # "PERF", # Perflint
+    # "FURB", # refurb
+    # "LOG", # flake8-logging
+    "RUF", # Ruff-specific rules
+]
+
+[tool.ruff.format]
+quote-style = "single"
+docstring-code-format = true

@@ -1,0 +1,60 @@
+name: publish to PyPI
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        just-trigger: [ format, lint, mypy ]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: extractions/setup-just@v2
+      - uses: astral-sh/setup-uv@v4
+
+      - run: uv python install 3.12
+      - run: uv sync --all-extras --dev
+      - run: just ${{ matrix.just-trigger }}
+
+  tests:
+    name: tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: extractions/setup-just@v2
+      - uses: astral-sh/setup-uv@v4
+
+      - run: uv python install 3.12
+      - run: uv sync --all-extras --dev
+
+      - name: Run tests
+        run: just tests
+
+  publish:
+    name: publish to PyPI
+    runs-on: ubuntu-latest
+    needs: [ lint, tests ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v4
+      - run: uv python install 3.12
+      - run: uv sync --all-extras --dev
+
+      - name: Build package
+        run: uv build
+
+      - name: Publish to PyPI
+        run: uv publish
