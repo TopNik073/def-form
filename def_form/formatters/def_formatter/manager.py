@@ -183,7 +183,6 @@ class DefManager:
             return None, []
 
     def format(self, write_to: str | None = None) -> None:
-        """Форматирует файлы согласно правилам."""
         processed_count = 0
         self.issues.clear()
 
@@ -231,11 +230,3 @@ class DefManager:
         click.secho(f'{mode.capitalize()} Summary:', fg='cyan', bold=True)
         click.echo(f'Processed files: {processed_count}')
         click.echo(f'Issues found: {len(self.issues)}')
-
-
-if __name__ == '__main__':
-    DefManager(
-        path='../../../../test_file.py',
-        max_def_length=100,
-        max_inline_args=2,
-    ).format()

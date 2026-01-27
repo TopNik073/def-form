@@ -8,8 +8,6 @@ from def_form.exceptions.base import BaseDefFormException
 
 @dataclass
 class FunctionAnalysis:
-    """Результат анализа функции."""
-
     should_process: bool
     reason: str | None = None
     line_length: int | None = None

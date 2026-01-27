@@ -15,7 +15,11 @@ from def_form.formatters.def_formatter.base import DefBase
 
 class DefFormatter(DefBase, CSTTransformer):
     def __init__(
-        self, filepath: str, max_def_length: int | None, max_inline_args: int | None, indent_size: int | None = None
+        self,
+        filepath: str,
+        max_def_length: int | None,
+        max_inline_args: int | None,
+        indent_size: int | None = None,
     ):
         super().__init__(filepath, max_def_length, max_inline_args)
         self.indent_size = indent_size if indent_size is not None else 4
