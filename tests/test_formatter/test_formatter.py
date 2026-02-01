@@ -1,21 +1,32 @@
-import os
-from collections.abc import Callable
+from pathlib import Path
+from unittest.mock import patch
 
-from def_form.formatters.def_formatter import DefManager
-from tests.constants import EXPECTED_TOTAL_ISSUES
-from tests.constants import FORMATTED_PATH
-from tests.mock_data import EXPECTED_ISSUES
+import pytest
 
-
-def test_successful_format(get_def_manager: DefManager, get_expected: str, get_formatted: Callable[[], str]):
-    get_def_manager.format(write_to=FORMATTED_PATH)
-    assert len(get_def_manager.issues) == EXPECTED_TOTAL_ISSUES
-    assert get_def_manager.issues == EXPECTED_ISSUES
-    assert get_expected == get_formatted()
-
-    os.remove(FORMATTED_PATH)
+from def_form.core import DefManager
+from tests.helpers import normalize_issues
+from tests.conftest import CASE_IDS
 
 
-def test_no_need_format(get_correct_def_manager: DefManager):
-    get_correct_def_manager.format()
-    assert len(get_correct_def_manager.issues) == 0
+@pytest.mark.parametrize('case_id', CASE_IDS, indirect=True)
+def test_format_case(
+    case_id: str,
+    case_dir: Path,
+    case_manager: DefManager,
+    case_expected_issues: list[tuple[int, str]],
+    case_expected_content: str | None,
+):
+    def capture_write(dest, module: str):
+        pass
+
+    with patch.object(case_manager, '_write', side_effect=capture_write) as mocked_write:
+        case_manager.format()
+
+    got_issues = normalize_issues(case_manager.issues)
+    assert got_issues == case_expected_issues, (
+        f'case_id={case_id}: expected issues {case_expected_issues}, got {got_issues}'
+    )
+
+    if case_expected_content is not None:
+        mocked_write.assert_called_once()
+        assert mocked_write.call_args[1]['module'].strip() == case_expected_content.strip()
