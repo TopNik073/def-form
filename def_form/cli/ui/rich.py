@@ -106,7 +106,7 @@ class RichUI(BaseUI):
         if not self.context.should_output:
             return
 
-        if not (self.progress and self._live and self.task_id):
+        if not (self.progress and self._live and self.task_id is not None):
             return
 
         self.current_file = path
