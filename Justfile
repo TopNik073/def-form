@@ -1,6 +1,9 @@
 SOURCE_PATH := "def_form"
 TESTS_PATH := "tests"
 
+default:
+    @just --list
+
 upgrade:
     uv lock --upgrade
 

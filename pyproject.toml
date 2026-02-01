@@ -64,6 +64,7 @@ indent_size = 4
 exclude = [
     ".venv/",
     "build/",
+    "tests/cases/"
 ]
 
 [tool.mypy]
@@ -79,8 +80,7 @@ warn_unused_ignores = true
 no_implicit_reexport = true
 exclude = [
     ".venv/",
-    "tests/mock_data/example.py",
-    "tests/mock_data/expected.py",
+    "tests/cases/",
 ]
 
 [tool.ruff]
@@ -88,8 +88,7 @@ target-version = "py310"
 line-length = 120
 exclude = [
     ".venv/",
-    "tests/mock_data/example.py",
-    "tests/mock_data/expected.py",
+    "tests/cases/",
 ]
 lint.flake8-tidy-imports.ban-relative-imports = "all"
 lint.mccabe.max-complexity = 20
