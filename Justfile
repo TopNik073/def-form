@@ -23,5 +23,6 @@ tests:
     uv run pytest \
         --cov=def_form \
         --cov-report=lcov:tests.lcov \
+        --cov-report=term \
         tests/
 
