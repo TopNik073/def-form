@@ -1,11 +1,15 @@
-# def-form
+<div style="padding-top: 30px; text-align: center;">
+  <img src="https://raw.githubusercontent.com/TopNik073/def-form/main/assets/logo-transparent.png" alt="def-form logo" width="300">
 
-Python function definition formatter
+  <p style="margin: 0; font-size: 18px;">Python function definition formatter</p>
 
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![PyPI](https://img.shields.io/pypi/v/def-form.svg)](https://pypi.python.org/pypi/def-form)
-[![PyPI](https://img.shields.io/pypi/dm/def-form.svg)](https://pypi.python.org/pypi/def-form)
-[![Coverage Status](https://coveralls.io/repos/github/TopNik073/def-form/badge.svg?branch=init)](https://coveralls.io/github/TopNik073/def-form?branch=init)
+  [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+  [![PyPI](https://img.shields.io/pypi/v/def-form.svg)](https://pypi.python.org/pypi/def-form)
+  [![PyPI](https://img.shields.io/pypi/dm/def-form.svg)](https://pypi.python.org/pypi/def-form)
+  [![Coverage Status](https://coveralls.io/repos/github/TopNik073/def-form/badge.svg?branch=init)](https://coveralls.io/github/TopNik073/def-form?branch=init)
+
+</div>
+
 ## Overview
 
 `def-form` is a code formatting tool that focuses specifically on Python function definitions. It helps maintain consistent formatting of function signatures by automatically organizing arguments vertically when they exceed specified thresholds.
