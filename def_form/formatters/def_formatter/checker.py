@@ -13,7 +13,10 @@ class DefChecker(DefBase, CSTVisitor):
         indent_size: int | None,
     ):
         super().__init__(
-            filepath=filepath, max_def_length=max_def_length, max_inline_args=max_inline_args, indent_size=indent_size
+            filepath=filepath,
+            max_def_length=max_def_length,
+            max_inline_args=max_inline_args,
+            indent_size=indent_size,
         )
 
     def leave_FunctionDef(self, original_node: FunctionDef) -> None:
