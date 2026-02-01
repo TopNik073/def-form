@@ -30,6 +30,7 @@ class InvalidMultilineParamsIndentException(BaseDefFormException):
     message: str = 'Invalid multiline params indentation'
     description: str | None = None
 
+
 @dataclass
 class CheckCommandFoundAnIssue(BaseDefFormException):
     path: str
