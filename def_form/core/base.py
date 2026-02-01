@@ -2,7 +2,8 @@ import re
 from pathlib import Path
 from typing import cast
 
-from libcst import FunctionDef, Comma
+from libcst import Comma
+from libcst import FunctionDef
 from libcst import MetadataDependent
 from libcst import Module
 from libcst import Param
@@ -12,10 +13,10 @@ from libcst.matchers import BaseParenthesizableWhitespace
 from libcst.metadata import PositionProvider
 
 from def_form.exceptions.base import BaseDefFormException
-from def_form.exceptions.def_formatter import DefStringTooLongException
-from def_form.exceptions.def_formatter import InvalidMultilineParamsIndentException
-from def_form.exceptions.def_formatter import TooManyInlineArgumentsException
-from def_form.formatters.def_formatter.models import FunctionAnalysis
+from def_form.core.models import FunctionAnalysis
+from def_form.core.params import get_params_list
+from def_form.core.rules import run_rules
+from def_form.core.rules.context import RuleContext
 
 
 class DefBase(MetadataDependent):
@@ -34,27 +35,6 @@ class DefBase(MetadataDependent):
         self.max_inline_args = max_inline_args
         self.indent_size = indent_size if indent_size is not None else 4
         self.issues: list[BaseDefFormException] = []
-
-    def _check_issues(self, line_length: int, line_no: int, arg_count: int) -> list[BaseDefFormException]:
-        issues: list[BaseDefFormException] = []
-
-        if self.max_def_length and line_length > self.max_def_length:
-            issues.append(
-                DefStringTooLongException(
-                    path=f'{self.filepath}:{line_no}',
-                    message=f'Function definition too long ({line_length} > {self.max_def_length})',
-                )
-            )
-
-        if self.max_inline_args and arg_count > self.max_inline_args:
-            issues.append(
-                TooManyInlineArgumentsException(
-                    path=f'{self.filepath}:{line_no}',
-                    message=f'Too many inline args ({arg_count} > {self.max_inline_args})',
-                )
-            )
-
-        return issues
 
     def is_single_line_function(self, node: FunctionDef) -> bool:
         func_code = Module([]).code_for_node(node).strip()
@@ -87,20 +67,6 @@ class DefBase(MetadataDependent):
 
         return False
 
-    def _get_params_list(self, node: FunctionDef) -> list[Param]:
-        params: list[Param] = []
-        params.extend(node.params.params)
-
-        if isinstance(node.params.star_arg, Param):
-            params.append(node.params.star_arg)
-
-        params.extend(node.params.kwonly_params)
-
-        if isinstance(node.params.star_kwarg, Param):
-            params.append(node.params.star_kwarg)
-
-        return params
-
     def has_correct_multiline_params_format(self, node: FunctionDef) -> bool:  # noqa: PLR0911, PLR0912
         ws = node.whitespace_before_params
         if not isinstance(ws, ParenthesizedWhitespace):
@@ -116,7 +82,7 @@ class DefBase(MetadataDependent):
         if ws.last_line.value != expected_indent:
             return False
 
-        all_params = self._get_params_list(node)
+        all_params = get_params_list(node)
 
         if not all_params:
             return True
@@ -195,18 +161,18 @@ class DefBase(MetadataDependent):
         pos = self.get_metadata(PositionProvider, node)
         line_no = pos.start.line
 
-        issues: list[BaseDefFormException] = []
-
-        if self.is_single_line_function(node):
-            issues = self._check_issues(line_length, line_no, arg_count)
-        elif not self.has_correct_multiline_params_format(node):
-            issues.append(
-                InvalidMultilineParamsIndentException(
-                    path=f'{self.filepath}:{line_no}',
-                    message=f'Invalid multiline function parameters indentation (expected {self.indent_size} spaces)',
-                )
-            )
-
+        context = RuleContext(
+            filepath=self.filepath,
+            line_no=line_no,
+            line_length=line_length,
+            arg_count=arg_count,
+            is_single_line=self.is_single_line_function(node),
+            has_correct_multiline_format=self.has_correct_multiline_params_format(node),
+            indent_size=self.indent_size,
+            max_def_length=self.max_def_length,
+            max_inline_args=self.max_inline_args,
+        )
+        issues = run_rules(context)
         has_issues = bool(issues)
 
         return FunctionAnalysis(

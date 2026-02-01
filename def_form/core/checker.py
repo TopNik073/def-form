@@ -1,7 +1,7 @@
 from libcst import CSTVisitor
 from libcst import FunctionDef
 
-from def_form.formatters.def_formatter.base import DefBase
+from def_form.core.base import DefBase
 
 
 class DefChecker(DefBase, CSTVisitor):

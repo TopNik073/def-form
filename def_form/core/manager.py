@@ -5,17 +5,19 @@ from pathlib import Path
 import tomli
 import libcst as cst
 
-from def_form.exceptions.base import BaseDefFormException
-from def_form.formatters.def_formatter.checker import DefChecker
-from def_form.formatters.def_formatter.formatter import DefFormatter
-from def_form.utils.find_pyproject import find_pyproject_toml
 from def_form.cli.ui import BaseUI
+from def_form.exceptions.base import BaseDefFormException
+from def_form.exceptions.def_formatter import CheckCommandFoundAnIssue
+from def_form.core.checker import DefChecker
+from def_form.core.formatter import DefFormatter
+from def_form.utils.find_pyproject import find_pyproject_toml
 
 
 class DefManager:
     def __init__(  # noqa: PLR0913
         self,
         path: str,
+        ui: BaseUI,
         excluded: tuple[str, ...] | None = None,
         formatter: type[DefFormatter] = DefFormatter,
         checker: type[DefChecker] = DefChecker,
@@ -24,9 +26,8 @@ class DefManager:
         indent_size: int | None = None,
         config: str | None = None,
         show_skipped: bool = False,
-        ui: BaseUI | None = None,
     ) -> None:
-        self.config: str = config or find_pyproject_toml()
+        self.config: str | None = config or find_pyproject_toml()
         self.path = Path(path).resolve()
         self.ui = ui
 
@@ -59,7 +60,7 @@ class DefManager:
 
     def _init_config(
         self,
-        config: str,
+        config: str | None,
         max_def_length: int | None,
         max_inline_args: int | None,
         indent_size: int | None,
@@ -74,24 +75,24 @@ class DefManager:
             return
 
         try:
-            with Path(config).open("rb") as f:
+            with Path(config).open('rb') as f:
                 config_data = tomli.load(f)
 
-            config_def = config_data.get("tool", {}).get("def-form", {})
+            config_def = config_data.get('tool', {}).get('def-form', {})
 
             self.max_def_length = config_def.get(
-                "max_def_length",
+                'max_def_length',
                 self.max_def_length,
             )
             self.max_inline_args = config_def.get(
-                "max_inline_args",
+                'max_inline_args',
                 self.max_inline_args,
             )
             self.indent_size = config_def.get(
-                "indent_size",
+                'indent_size',
                 self.indent_size,
             )
-            self._config_excluded = config_def.get("exclude", [])
+            self._config_excluded = config_def.get('exclude', [])
 
         except (FileNotFoundError, tomli.TOMLDecodeError):
             self._config_excluded = []
@@ -128,7 +129,7 @@ class DefManager:
 
     def _iter_py_files(self) -> Generator[Path, None, None]:
         if self.path.is_file():
-            if self.path.suffix != ".py":
+            if self.path.suffix != '.py':
                 return
 
             if self._is_excluded(self.path):
@@ -141,12 +142,10 @@ class DefManager:
         for root, dirs, files in os.walk(self.path):
             root_path = Path(root)
 
-            dirs[:] = [
-                d for d in dirs if not self._is_excluded(root_path / d)
-            ]
+            dirs[:] = [d for d in dirs if not self._is_excluded(root_path / d)]
 
             for filename in files:
-                if not filename.endswith(".py"):
+                if not filename.endswith('.py'):
                     continue
 
                 file_path = root_path / filename
@@ -179,7 +178,7 @@ class DefManager:
         processor_class: type[DefFormatter] | type[DefChecker],
     ) -> tuple[cst.Module | None, list[BaseDefFormException]]:
         try:
-            code = filepath.read_text(encoding="utf-8")
+            code = filepath.read_text(encoding='utf-8')
         except (OSError, UnicodeDecodeError):
             return None, []
 
@@ -200,6 +199,16 @@ class DefManager:
         except Exception:
             return None, []
 
+    def _write(
+        self,
+        dest: str | Path,
+        module: str,
+    ) -> None:
+        try:
+            Path(dest).write_text(module, encoding='utf-8')
+        except OSError:
+            self.ui.console.error(f'Exception occurred while writing to {dest}')
+
     # --------------------------------------------------------------------- #
     # Public API
     # --------------------------------------------------------------------- #
@@ -208,12 +217,10 @@ class DefManager:
         self.issues.clear()
         files = list(self._iter_py_files())
 
-        if self.ui:
-            self.ui.start(total=len(files))
+        self.ui.start(total=len(files))
 
         for path in files:
-            if self.ui:
-                self.ui.processing(path)
+            self.ui.processing(path)
 
             new_tree, file_issues = self._process_file(
                 path,
@@ -223,24 +230,21 @@ class DefManager:
             self.issues.extend(file_issues)
 
             if new_tree is not None:
-                try:
-                    path.write_text(new_tree.code, encoding="utf-8")
-                except OSError:
-                    continue
+                self._write(
+                    dest=path,
+                    module=new_tree.code,
+                )
 
-        if self.ui:
-            self.ui.finish(len(files), self.issues)
+        self.ui.finish(len(files), self.issues)
 
     def check(self) -> None:
         self.issues.clear()
         files = list(self._iter_py_files())
 
-        if self.ui:
-            self.ui.start(total=len(files))
+        self.ui.start(total=len(files))
 
         for path in files:
-            if self.ui:
-                self.ui.processing(path)
+            self.ui.processing(path)
 
             _, file_issues = self._process_file(
                 path,
@@ -249,8 +253,7 @@ class DefManager:
 
             self.issues.extend(file_issues)
 
-        if self.ui:
-            self.ui.finish(len(files), self.issues)
+        self.ui.finish(len(files), self.issues)
 
         if self.issues:
-            raise BaseDefFormException
+            raise CheckCommandFoundAnIssue(str(self.path), 'check command did found an issue')

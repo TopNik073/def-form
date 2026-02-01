@@ -29,3 +29,9 @@ class InvalidMultilineParamsIndentException(BaseDefFormException):
     path: str
     message: str = 'Invalid multiline params indentation'
     description: str | None = None
+
+@dataclass
+class CheckCommandFoundAnIssue(BaseDefFormException):
+    path: str
+    message: str = 'check command did found an issue'
+    description: str | None = None

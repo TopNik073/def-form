@@ -3,6 +3,6 @@ from dataclasses import dataclass
 
 @dataclass
 class BaseDefFormException(Exception):
-    path: str | None = None
-    message: str | None = None
+    path: str
+    message: str
     description: str | None = None
