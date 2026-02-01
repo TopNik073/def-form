@@ -1,11 +1,11 @@
 import click
 
 from def_form.cli.commands.options import common_options
-from def_form.cli.console import Console
+from def_form.cli.console import RichConsole
 from def_form.cli.context import context
 from def_form.cli.errors import FormatterFailedError
 from def_form.cli.ui.rich import RichUI
-from def_form.formatters import DefManager
+from def_form.core import DefManager
 
 
 @click.command()
@@ -20,9 +20,9 @@ def format(  # noqa: PLR0913
     show_skipped: bool,
 ) -> None:
     context.show_skipped = show_skipped
-    console = Console(context=context)
-    console.info(f"Formatting [bold]{path}[/bold]")
-    console.debug("Initializing formatter")
+    console = RichConsole(context=context)
+    console.info(f'Formatting [bold]{path}[/bold]')
+    console.debug('Initializing formatter')
 
     try:
         DefManager(
@@ -33,9 +33,9 @@ def format(  # noqa: PLR0913
             indent_size=indent_size,
             config=config,
             show_skipped=show_skipped,
-            ui=RichUI(context=context),
+            ui=RichUI(console=console),
         ).format()
     except Exception as exc:
         raise FormatterFailedError(str(exc)) from exc
 
-    console.success("Formatting completed")
+    console.success('Formatting completed')

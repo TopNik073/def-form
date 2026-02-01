@@ -1,12 +1,13 @@
 import click
 import sys
-from def_form.cli.console import Console
+from def_form.cli.console import RichConsole
 from def_form.cli.context import context
 from def_form.cli.errors import CLIError
 from def_form.cli.commands.check import check
 from def_form.cli.commands.format import format
 
-console = Console(context=context)
+console = RichConsole(context=context)
+
 
 @click.group()
 @click.option('--verbose', is_flag=True, help='Enable verbose output')
@@ -27,10 +28,10 @@ def main() -> None:
         console.error(str(exc))
         sys.exit(1)
     except KeyboardInterrupt:
-        console.error("Operation cancelled by user")
+        console.error('Operation cancelled by user')
         sys.exit(130)
     except Exception as exc:
-        console.error(f"Unexpected error: {exc}")
+        console.error(f'Unexpected error: {exc}')
         sys.exit(1)
 
 

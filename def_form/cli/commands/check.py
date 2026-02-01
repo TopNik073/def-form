@@ -1,12 +1,12 @@
 import click
 
 from def_form.cli.commands.options import common_options
-from def_form.cli.console import Console
+from def_form.cli.console import RichConsole
 from def_form.cli.context import context
 from def_form.cli.errors import CheckFailedError
 from def_form.cli.ui.rich import RichUI
 from def_form.exceptions.base import BaseDefFormException
-from def_form.formatters import DefManager
+from def_form.core import DefManager
 
 
 @click.command()
@@ -20,8 +20,8 @@ def check(  # noqa: PLR0913
     exclude: tuple[str, ...],
     show_skipped: bool,
 ) -> None:
-    console = Console(context=context)
-    console.info(f"Checking [bold]{path}[/bold]")
+    console = RichConsole(context=context)
+    console.info(f'Checking [bold]{path}[/bold]')
 
     try:
         DefManager(
@@ -32,11 +32,11 @@ def check(  # noqa: PLR0913
             indent_size=indent_size,
             config=config,
             show_skipped=show_skipped,
-            ui=RichUI(context=context),
+            ui=RichUI(console=console),
         ).check()
-    except BaseDefFormException:
-        raise CheckFailedError("Code style violations found")
+    except BaseDefFormException as exc:
+        raise CheckFailedError('Code style violations found') from exc
     except Exception as exc:
         raise CheckFailedError(str(exc)) from exc
 
-    console.success("All checks passed")
+    console.success('All checks passed')
