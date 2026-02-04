@@ -199,7 +199,6 @@ def test_rich_ui_show_config_info_skips_none_and_empty_values() -> None:
     console.context = ctx
     ui = RichUI(console=console)
     ui.show_config_info(config_path='/x', max_def_length=None, indent_size='')
-    # config_path is shown; None and '' are skipped (cover lines 49-50)
     assert console.print.call_count >= 1
 
 
