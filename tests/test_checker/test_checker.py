@@ -1,19 +1,23 @@
 import pytest
 
 from def_form.exceptions.base import BaseDefFormException
-from def_form.formatters.def_formatter import DefManager
-from tests.constants import EXPECTED_TOTAL_ISSUES
-from tests.mock_data import EXPECTED_ISSUES
+from def_form.exceptions.def_formatter import CheckCommandFoundAnIssue
+
+from tests.helpers import normalize_issues
+from tests.conftest import CASE_IDS
 
 
-def test_failed_check(get_def_manager: DefManager):
-    with pytest.raises(BaseDefFormException):
-        get_def_manager.check()
+@pytest.mark.parametrize('case_id', CASE_IDS, indirect=True)
+def test_check_case(
+    case_id: str,
+    case_manager,
+    case_expected_issues: list[tuple[int, str]],
+):
+    if case_expected_issues:
+        with pytest.raises(CheckCommandFoundAnIssue):
+            case_manager.check()
+    else:
+        case_manager.check()
 
-    assert get_def_manager.issues == EXPECTED_ISSUES
-    assert len(get_def_manager.issues) == EXPECTED_TOTAL_ISSUES
-
-
-def test_successful_check(get_correct_def_manager: DefManager):
-    get_correct_def_manager.check()
-    assert len(get_correct_def_manager.issues) == 0
+    got = normalize_issues(case_manager.issues)
+    assert got == case_expected_issues

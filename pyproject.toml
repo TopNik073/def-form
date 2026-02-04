@@ -1,6 +1,6 @@
 [project]
 name = "def-form"
-version = "0.1.0"
+version = "0.2.0"
 description = "Formatter for functions"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -33,6 +33,7 @@ classifiers = [
 dependencies = [
     "click>=8.2.1",
     "libcst>=1.8.2",
+    "rich>=14.3.1",
     "tomli>=2.4.0",
 ]
 
@@ -63,6 +64,7 @@ indent_size = 4
 exclude = [
     ".venv/",
     "build/",
+    "tests/cases/"
 ]
 
 [tool.mypy]
@@ -78,8 +80,7 @@ warn_unused_ignores = true
 no_implicit_reexport = true
 exclude = [
     ".venv/",
-    "tests/mock_data/example.py",
-    "tests/mock_data/expected.py",
+    "tests/cases/",
 ]
 
 [tool.ruff]
@@ -87,8 +88,7 @@ target-version = "py310"
 line-length = 120
 exclude = [
     ".venv/",
-    "tests/mock_data/example.py",
-    "tests/mock_data/expected.py",
+    "tests/cases/",
 ]
 lint.flake8-tidy-imports.ban-relative-imports = "all"
 lint.mccabe.max-complexity = 20

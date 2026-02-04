@@ -1,6 +1,9 @@
 SOURCE_PATH := "def_form"
 TESTS_PATH := "tests"
 
+default:
+    @just --list
+
 upgrade:
     uv lock --upgrade
 
@@ -20,5 +23,6 @@ tests:
     uv run pytest \
         --cov=def_form \
         --cov-report=lcov:tests.lcov \
+        --cov-report=term \
         tests/
 
