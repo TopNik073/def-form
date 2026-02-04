@@ -1,14 +1,14 @@
-<div style="padding-top: 30px; text-align: center;">
-  <img src="https://raw.githubusercontent.com/TopNik073/def-form/main/assets/logo-transparent.png" alt="def-form logo" width="300">
+<p align="center" style="padding-top: 30px;">
+  <img src="https://raw.githubusercontent.com/TopNik073/def-form/main/assets/logo-transparent.png" alt="def-form logo" width="300"><br>
+  <span style="font-size: 18px;">Python function definition formatter</span>
+</p>
 
-  <p style="margin: 0; font-size: 18px;">Python function definition formatter</p>
-
-  [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-  [![PyPI](https://img.shields.io/pypi/v/def-form.svg)](https://pypi.python.org/pypi/def-form)
-  [![PyPI](https://img.shields.io/pypi/dm/def-form.svg)](https://pypi.python.org/pypi/def-form)
-  [![Coverage Status](https://coveralls.io/repos/github/TopNik073/def-form/badge.svg?branch=init)](https://coveralls.io/github/TopNik073/def-form?branch=init)
-
-</div>
+<p align="center">
+  <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff" style="margin: 0 5px; border: none;"></a>
+  <a href="https://pypi.org/project/def-form/"><img src="https://img.shields.io/pypi/v/def-form.svg" alt="PyPI version" style="margin: 0 5px; border: none;"></a>
+  <a href="https://pypi.org/project/def-form/"><img src="https://img.shields.io/pypi/dm/def-form.svg" alt="PyPI downloads" style="margin: 0 5px; border: none;"></a>
+  <a href="https://coveralls.io/github/TopNik073/def-form?branch=main"><img src="https://coveralls.io/repos/github/TopNik073/def-form/badge.svg?branch=main" alt="Coverage Status" style="margin: 0 5px; border: none;"></a>
+</p>
 
 ## Overview
 
