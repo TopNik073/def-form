@@ -10,6 +10,9 @@ upgrade:
 format:
     uv run ruff format {{ SOURCE_PATH }}
 
+format-check:
+    uv run ruff format --check {{ SOURCE_PATH }}
+
 lint:
     uv run ruff check {{ SOURCE_PATH }}
 

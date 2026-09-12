@@ -21,6 +21,7 @@ class RichUI(BaseUI):
             console=console,
         )
         self.progress: Progress | None = None
+        self._progress_display: Group = Group()
         self._live: Live | None = None
         self.task_id: int | None = None
         self.current_file: Path | None = None
@@ -102,10 +103,7 @@ class RichUI(BaseUI):
             total=total,
         )
 
-    def processing(self, path: Path) -> None:
-        if not self.context.should_output:
-            return
-
+    def _advance(self, path: Path) -> None:
         if not (self.progress and self._live and self.task_id is not None):
             return
 
@@ -121,6 +119,18 @@ class RichUI(BaseUI):
 
         self._live.refresh()
 
+    def processing(self, path: Path) -> None:
+        if not self.context.should_output:
+            return
+
+        self._advance(path)
+
+    def cached(self, path: Path) -> None:
+        if not self.context.should_output:
+            return
+
+        self._advance(path)
+
     def skipped(self, path: Path) -> None:
         if not self.context.should_output:
             return
@@ -130,10 +140,12 @@ class RichUI(BaseUI):
 
         self.console.print(f'[yellow]SKIPPED[/yellow] {path}')
 
-    def issue(self, issue: BaseDefFormException) -> None:
-        pass
-
-    def finish(self, processed: int, issues: list[BaseDefFormException]) -> None:
+    def finish(
+        self,
+        processed: int,
+        issues: list[BaseDefFormException],
+        cached: int = 0,
+    ) -> None:
         if not self.context.should_output:
             return
 
@@ -146,9 +158,14 @@ class RichUI(BaseUI):
             self.progress = None
 
         if issues:
-            self.show_issues(processed, issues)
+            self.show_issues(processed, issues, cached=cached)
 
-    def show_issues(self, processed: int, issues: list[BaseDefFormException]) -> None:
+    def show_issues(
+        self,
+        processed: int,
+        issues: list[BaseDefFormException],
+        cached: int = 0,
+    ) -> None:
         if not self.context.should_output:
             return
 
@@ -185,9 +202,14 @@ class RichUI(BaseUI):
 
             self.console.print()
 
-        self.show_summary(processed, issues)
+        self.show_summary(processed, issues, cached=cached)
 
-    def show_summary(self, processed: int, issues: list[BaseDefFormException]) -> None:
+    def show_summary(
+        self,
+        processed: int,
+        issues: list[BaseDefFormException],
+        cached: int = 0,
+    ) -> None:
         if not self.context.should_output:
             return
 
@@ -198,6 +220,10 @@ class RichUI(BaseUI):
         summary.add_column()
 
         summary.add_row('Files processed:', f'[cyan]{processed}[/cyan]')
+
+        if cached:
+            summary.add_row('Files from cache:', f'[green]{cached}[/green]')
+
         summary.add_row('Files with issues:', f'[yellow]{len(unique_files)}[/yellow]')
         summary.add_row('Total errors:', f'[red]{len(issues)}[/red]')
 

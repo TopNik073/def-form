@@ -29,13 +29,32 @@ class BaseUI(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def finish(self, processed: int, issues: list[BaseDefFormException]) -> None:
+    def cached(self, path: Path) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def show_issues(self, processed: int, issues: list[BaseDefFormException]) -> None:
+    def finish(
+        self,
+        processed: int,
+        issues: list[BaseDefFormException],
+        cached: int = 0,
+    ) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def show_summary(self, processed: int, issues: list[BaseDefFormException]) -> None:
+    def show_issues(
+        self,
+        processed: int,
+        issues: list[BaseDefFormException],
+        cached: int = 0,
+    ) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def show_summary(
+        self,
+        processed: int,
+        issues: list[BaseDefFormException],
+        cached: int = 0,
+    ) -> None:
         raise NotImplementedError

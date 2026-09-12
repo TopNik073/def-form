@@ -28,12 +28,12 @@ class DefBase(MetadataDependent):
         max_def_length: int | None,
         max_inline_args: int | None,
         indent_size: int | None = None,
-    ):
+    ) -> None:
         super().__init__()
-        self.filepath = filepath
-        self.max_def_length = max_def_length
-        self.max_inline_args = max_inline_args
-        self.indent_size = indent_size if indent_size is not None else 4
+        self.filepath: str = filepath
+        self.max_def_length: int | None = max_def_length
+        self.max_inline_args: int | None = max_inline_args
+        self.indent_size: int = indent_size if indent_size is not None else 4
         self.issues: list[BaseDefFormException] = []
 
     def is_single_line_function(self, node: FunctionDef) -> bool:

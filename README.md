@@ -14,6 +14,53 @@
 
 `def-form` is a code formatting tool that focuses specifically on Python function definitions. It helps maintain consistent formatting of function signatures by automatically organizing arguments vertically when they exceed specified thresholds.
 
+Long signatures are hard to scan, and different people break them differently — or not at all. `def-form` makes that choice for you and applies it everywhere: every definition past your threshold gets one argument per line, with a trailing comma.
+
+**Before:**
+
+```python
+def get_user(session: Session, user_id: int) -> User:
+    ...
+
+
+def create_user(session: Session, name: str, email: str, is_admin: bool = False) -> User:
+    ...
+
+
+class UserRepository:
+    def search(self, query: str, *filters: str, limit: int = 20, **options) -> list[User]:
+        ...
+```
+
+**After** `def-form format` (with `max_inline_args = 2`):
+
+```python
+def get_user(session: Session, user_id: int) -> User:
+    ...
+
+
+def create_user(
+    session: Session,
+    name: str,
+    email: str,
+    is_admin: bool = False,
+) -> User:
+    ...
+
+
+class UserRepository:
+    def search(
+        self,
+        query: str,
+        *filters: str,
+        limit: int = 20,
+        **options,
+    ) -> list[User]:
+        ...
+```
+
+`get_user` is left alone — it stays within the limits. Definitions that are already formatted this way are left untouched too, and a `# def-form: skip` comment excludes a single definition.
+
 ## Features
 
 - **Automatic argument formatting**: Converts inline function arguments to vertical format based on configurable rules
@@ -51,6 +98,14 @@ def-form format my_module.py
 def-form check src/
 ```
 
+### Clear the cache
+
+Files that pass are remembered in `.def_form_cache/`, so unchanged files are skipped on the next run. To drop what was remembered:
+
+```bash
+def-form clean
+```
+
 ### Example
 
 You can check your code with `check` command and see the result
@@ -66,6 +121,7 @@ Checking test_file.py
   Max Def Length:    100                                           
   Indent Size:       4 spaces                                      
   Show Skipped:      No                                            
+  Cache:             Yes                                           
   Excluded:          .venv, tests/cases, build                     
  ───────────────────────────────────────────────────────────────── 
 
@@ -97,6 +153,7 @@ Formatting test_file.py
   Max Def Length:    100                                           
   Indent Size:       4 spaces                                      
   Show Skipped:      No                                            
+  Cache:             Yes                                           
   Excluded:          build, .venv, tests/cases                     
  ───────────────────────────────────────────────────────────────── 
 
@@ -130,6 +187,7 @@ Options:
 
 Commands:
   check
+  clean
   format
 ```
 
@@ -140,6 +198,7 @@ Usage: def-form format [OPTIONS] [PATH]
 
 Options:
   --config FILE              Path to pyproject.toml configuration file
+  --no-cache                 Process every file, ignoring the cache
   --show-skipped             Show skipped files and directories
   --exclude PATH             Paths to exclude from processing
   --indent-size INTEGER      Indent size in spaces (default: 4)
@@ -157,6 +216,7 @@ Create a pyproject.toml file in your project root:
 max_def_length = 100  # Maximum allowed characters in a single-line function definition
 max_inline_args = 2   # Maximum number of arguments allowed in inline format
 indent_size = 4       # Indent for arguments in spaces
+cache = true          # Skip files that already passed and have not changed since
 exclude = [           # Files or directories you want to exclude
     '.venv',
     'migrations'

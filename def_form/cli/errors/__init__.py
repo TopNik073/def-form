@@ -8,3 +8,7 @@ class FormatterFailedError(CLIError):
 
 class CheckFailedError(CLIError):
     pass
+
+
+class CleanFailedError(CLIError):
+    pass

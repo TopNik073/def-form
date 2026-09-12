@@ -36,14 +36,17 @@ def test_base_ui_abstract_methods_raise_not_implemented() -> None:
         def skipped(self, path: Path) -> None:
             super().skipped(path)
 
-        def finish(self, processed: int, issues: list[BaseDefFormException]) -> None:
-            super().finish(processed, issues)
+        def cached(self, path: Path) -> None:
+            super().cached(path)
 
-        def show_issues(self, processed: int, issues: list[BaseDefFormException]) -> None:
-            super().show_issues(processed, issues)
+        def finish(self, processed: int, issues: list[BaseDefFormException], cached: int = 0) -> None:
+            super().finish(processed, issues, cached)
 
-        def show_summary(self, processed: int, issues: list[BaseDefFormException]) -> None:
-            super().show_summary(processed, issues)
+        def show_issues(self, processed: int, issues: list[BaseDefFormException], cached: int = 0) -> None:
+            super().show_issues(processed, issues, cached)
+
+        def show_summary(self, processed: int, issues: list[BaseDefFormException], cached: int = 0) -> None:
+            super().show_summary(processed, issues, cached)
 
     console = _make_base_ui_console()
     ui = StubUI(console=console)
@@ -56,6 +59,8 @@ def test_base_ui_abstract_methods_raise_not_implemented() -> None:
         ui.processing(Path('x.py'))
     with pytest.raises(NotImplementedError):
         ui.skipped(Path('y'))
+    with pytest.raises(NotImplementedError):
+        ui.cached(Path('z.py'))
     with pytest.raises(NotImplementedError):
         ui.finish(1, [])
     with pytest.raises(NotImplementedError):
@@ -73,6 +78,7 @@ def test_null_ui_all_methods_no_op() -> None:
     ui.start(1)
     ui.processing(Path('x.py'))
     ui.skipped(Path('y'))
+    ui.cached(Path('z.py'))
     ui.finish(1, [])
     ui.show_issues(1, [])
     ui.show_summary(1, [])
@@ -251,14 +257,6 @@ def test_rich_ui_skipped_prints_when_show_skipped_true() -> None:
     assert 'SKIPPED' in str(console.print.call_args[0][0])
 
 
-def test_rich_ui_issue_no_op() -> None:
-    ctx = CLIContext()
-    console = MagicMock(spec=BaseConsole)
-    console.context = ctx
-    ui = RichUI(console=console)
-    ui.issue(TooManyInlineArgumentsException(path='f:1', message='m'))
-
-
 def test_rich_ui_finish_stops_live_and_shows_issues_when_present() -> None:
     ctx = CLIContext()
     console = RichConsole(context=ctx, file=StringIO())
@@ -300,3 +298,54 @@ def test_rich_ui_show_summary_success_rate_branches() -> None:
     assert console.print.call_count >= 1
     ui.show_summary(10, [TooManyInlineArgumentsException(path=f'f{i}.py:1', message='x') for i in range(10)])
     assert console.print.call_count >= 2
+
+
+def test_rich_ui_show_config_info_always_shows_cache_row() -> None:
+    for verbose in (False, True):
+        ctx = CLIContext(verbose=verbose)
+        buffer = StringIO()
+        console = RichConsole(context=ctx, file=buffer, force_terminal=False, width=200)
+        ui = RichUI(console=console)
+
+        ui.show_config_info(max_inline_args=2, cache=True)
+
+        assert 'Cache' in buffer.getvalue()
+
+
+def test_rich_ui_cached_prints_nothing_while_processing() -> None:
+    for verbose in (False, True):
+        ctx = CLIContext(verbose=verbose)
+        buffer = StringIO()
+        console = RichConsole(context=ctx, file=buffer, force_terminal=False, width=200)
+        ui = RichUI(console=console)
+
+        ui.cached(Path('a.py'))
+
+        assert buffer.getvalue() == ''
+
+
+def test_rich_ui_cached_advances_progress() -> None:
+    ctx = CLIContext()
+    console = RichConsole(context=ctx, file=StringIO())
+    ui = RichUI(console=console)
+
+    ui.start(2)
+    ui.cached(Path('a.py'))
+
+    assert ui.progress is not None
+    assert ui.progress.tasks[0].completed == 1
+
+    ui.finish(0, [])
+
+
+def test_rich_ui_show_summary_includes_cache_row() -> None:
+    ctx = CLIContext()
+    buffer = StringIO()
+    console = RichConsole(context=ctx, file=buffer, force_terminal=False, width=200)
+    ui = RichUI(console=console)
+
+    ui.show_summary(3, [], cached=7)
+
+    output = buffer.getvalue()
+    assert 'Files from cache' in output
+    assert '7' in output
