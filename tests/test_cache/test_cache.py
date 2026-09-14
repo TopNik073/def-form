@@ -120,6 +120,7 @@ def test_save_writes_manifest_and_gitignore(tmp_path: Path) -> None:
     manifest_path = tmp_path / CACHE_DIR_NAME / MANIFEST_NAME
     assert manifest_path.is_file()
     assert (tmp_path / CACHE_DIR_NAME / '.gitignore').read_text(encoding='utf-8').endswith('*\n')
+    assert (tmp_path / CACHE_DIR_NAME / 'CACHEDIR.TAG').read_text(encoding='utf-8').startswith('Signature: 8a477f597d28d172789f06886806bc55')
 
     data = json.loads(manifest_path.read_text(encoding='utf-8'))
     assert data['manifest_version'] == 1
@@ -288,3 +289,16 @@ def test_cache_without_signature_can_still_be_cleared(tmp_path: Path) -> None:
 
     assert DefCache(root=tmp_path, enabled=True).clear() is True
     assert not (tmp_path / CACHE_DIR_NAME).exists()
+
+
+def test_existing_markers_are_not_overwritten(tmp_path: Path) -> None:
+    cache_dir = tmp_path / CACHE_DIR_NAME
+    cache_dir.mkdir()
+    (cache_dir / '.gitignore').write_text('custom\n', encoding='utf-8')
+
+    cache = _make_cache(tmp_path)
+    cache.store(_make_file(tmp_path), DefCache.compute_digest('x = 1\n'))
+    cache.save()
+
+    assert (cache_dir / '.gitignore').read_text(encoding='utf-8') == 'custom\n'
+    assert (cache_dir / 'CACHEDIR.TAG').is_file()

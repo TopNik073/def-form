@@ -20,6 +20,13 @@ MANIFEST_VERSION = 1
 GITIGNORE_NAME = '.gitignore'
 GITIGNORE_CONTENT = '# Automatically created by def-form\n*\n'
 
+CACHEDIR_TAG_NAME = 'CACHEDIR.TAG'
+CACHEDIR_TAG_CONTENT = (
+    'Signature: 8a477f597d28d172789f06886806bc55\n'
+    '# This file is a cache directory tag automatically created by def-form\n'
+    '# For information about cache directory tags see https://bford.info/cachedir/\n'
+)
+
 
 class DefCache:
     """Maps every known-clean file to the sha256 of the source it was validated against.
@@ -118,7 +125,8 @@ class DefCache:
 
         try:
             self.dir.mkdir(parents=True, exist_ok=True)
-            self._write_gitignore()
+            self._write_marker(GITIGNORE_NAME, GITIGNORE_CONTENT)
+            self._write_marker(CACHEDIR_TAG_NAME, CACHEDIR_TAG_CONTENT)
 
             tmp_path.write_text(json.dumps(manifest.to_dict(), indent=2), encoding='utf-8')
             tmp_path.replace(self.manifest_path)
@@ -130,13 +138,17 @@ class DefCache:
 
         return True
 
-    def _write_gitignore(self) -> None:
-        gitignore = self.dir / GITIGNORE_NAME
+    def _write_marker(
+        self,
+        name: str,
+        content: str,
+    ) -> None:
+        marker = self.dir / name
 
-        if gitignore.exists():
+        if marker.exists():
             return
 
-        gitignore.write_text(GITIGNORE_CONTENT, encoding='utf-8')
+        marker.write_text(content, encoding='utf-8')
 
     def clear(self) -> bool:
         if not self.dir.is_dir():
