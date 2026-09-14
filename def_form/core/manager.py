@@ -1,6 +1,7 @@
 import os
 from collections.abc import Generator
 from pathlib import Path
+from typing import Any
 
 import tomli
 import libcst as cst
@@ -8,8 +9,12 @@ import libcst as cst
 from def_form.cli.ui import BaseUI
 from def_form.exceptions.base import BaseDefFormException
 from def_form.exceptions.def_formatter import CheckCommandFoundAnIssue
+from def_form.core.cache import DefCache
 from def_form.core.checker import DefChecker
 from def_form.core.formatter import DefFormatter
+from def_form.core.models import CacheSignature
+from def_form.core.models import ProcessResult
+from def_form.utils.find_cache_root import find_cache_root
 from def_form.utils.find_pyproject import find_pyproject_toml
 
 
@@ -26,31 +31,37 @@ class DefManager:
         indent_size: int | None = None,
         config: str | None = None,
         show_skipped: bool = False,
+        cache: bool | None = None,
     ) -> None:
         self.config: str | None = config or find_pyproject_toml()
-        self.path = Path(path).resolve()
-        self.ui = ui
+        self.path: Path = Path(path).resolve()
+        self.ui: BaseUI = ui
+        self.show_skipped: bool = show_skipped
 
         self.issues: list[BaseDefFormException] = []
 
-        self.formatter_class = formatter
-        self.checker_class = checker
+        self.formatter_class: type[DefFormatter] = formatter
+        self.checker_class: type[DefChecker] = checker
 
         self._init_config(
             config=self.config,
             max_def_length=max_def_length,
             max_inline_args=max_inline_args,
             indent_size=indent_size,
+            cache=cache,
         )
 
         self._init_exclusions(excluded or ())
+        self._init_cache()
 
+    def _show_config(self) -> None:
         self.ui.show_config_info(
             config_path=self.config,
             max_inline_args=self.max_inline_args,
             max_def_length=self.max_def_length,
             indent_size=f'{self.indent_size} spaces',
-            show_skipped=show_skipped,
+            show_skipped=self.show_skipped,
+            cache=self.use_cache,
             excluded=self.excluded,
         )
 
@@ -58,44 +69,72 @@ class DefManager:
     # Configuration
     # --------------------------------------------------------------------- #
 
+    def _read_config(self, config: str | None) -> dict[str, Any]:
+        if not config:
+            return {}
+
+        try:
+            with Path(config).open('rb') as f:
+                config_data = tomli.load(f)
+        except (OSError, tomli.TOMLDecodeError):
+            return {}
+
+        section = config_data.get('tool', {}).get('def-form', {})
+
+        return section if isinstance(section, dict) else {}
+
+    def _resolve_config_value(
+        self,
+        cli_value: Any,
+        config_data: dict[str, Any],
+        key: str,
+        default: Any = None,
+    ) -> Any:
+        """A value given on the command line always wins over pyproject.toml"""
+        if cli_value is not None:
+            return cli_value
+
+        return config_data.get(key, default)
+
     def _init_config(
         self,
         config: str | None,
         max_def_length: int | None,
         max_inline_args: int | None,
         indent_size: int | None,
+        cache: bool | None,
     ) -> None:
-        self.max_def_length = max_def_length
-        self.max_inline_args = max_inline_args
-        self.indent_size = indent_size
+        config_def = self._read_config(config)
 
-        self._config_excluded: list[str] = []
+        self.max_def_length: int | None = self._resolve_config_value(max_def_length, config_def, 'max_def_length')
+        self.max_inline_args: int | None = self._resolve_config_value(max_inline_args, config_def, 'max_inline_args')
+        self.indent_size: int | None = self._resolve_config_value(indent_size, config_def, 'indent_size')
+        self.use_cache: bool = bool(self._resolve_config_value(cache, config_def, 'cache', default=True))
 
-        if not config:
-            return
+        config_excluded = config_def.get('exclude', [])
+        self._config_excluded: list[str] = config_excluded if isinstance(config_excluded, list) else []
 
-        try:
-            with Path(config).open('rb') as f:
-                config_data = tomli.load(f)
+    # --------------------------------------------------------------------- #
+    # Cache
+    # --------------------------------------------------------------------- #
 
-            config_def = config_data.get('tool', {}).get('def-form', {})
+    def _build_cache_signature(self) -> CacheSignature | None:
+        if not self.use_cache:
+            return None
 
-            self.max_def_length = config_def.get(
-                'max_def_length',
-                self.max_def_length,
-            )
-            self.max_inline_args = config_def.get(
-                'max_inline_args',
-                self.max_inline_args,
-            )
-            self.indent_size = config_def.get(
-                'indent_size',
-                self.indent_size,
-            )
-            self._config_excluded = config_def.get('exclude', [])
+        return CacheSignature(
+            tool_version=DefCache.tool_version(),
+            max_def_length=self.max_def_length,
+            max_inline_args=self.max_inline_args,
+            indent_size=self.indent_size,
+        )
 
-        except (FileNotFoundError, tomli.TOMLDecodeError):
-            self._config_excluded = []
+    def _init_cache(self) -> None:
+        self.cache: DefCache = DefCache(
+            root=find_cache_root(),
+            signature=self._build_cache_signature(),
+            enabled=self.use_cache,
+        )
 
     # --------------------------------------------------------------------- #
     # Exclusions
@@ -172,16 +211,18 @@ class DefManager:
             indent_size=self.indent_size,
         )
 
-    def _process_file(
+    def _read(self, filepath: Path) -> str | None:
+        try:
+            return filepath.read_text(encoding='utf-8')
+        except (OSError, UnicodeDecodeError):
+            return None
+
+    def _process_code(
         self,
+        code: str,
         filepath: Path,
         processor_class: type[DefFormatter] | type[DefChecker],
-    ) -> tuple[cst.Module | None, list[BaseDefFormException]]:
-        try:
-            code = filepath.read_text(encoding='utf-8')
-        except (OSError, UnicodeDecodeError):
-            return None, []
-
+    ) -> ProcessResult:
         try:
             tree = cst.parse_module(code)
             wrapper = cst.metadata.MetadataWrapper(tree)
@@ -189,15 +230,37 @@ class DefManager:
 
             if issubclass(processor_class, DefFormatter):
                 new_tree = wrapper.visit(processor)
-                return new_tree, processor.issues
+                return ProcessResult(ok=True, module=new_tree, issues=processor.issues)
 
             wrapper.visit(processor)
-            return None, processor.issues
+            return ProcessResult(ok=True, issues=processor.issues)
 
         except cst.ParserSyntaxError:
-            return None, []
+            return ProcessResult(ok=False)
         except Exception:
+            return ProcessResult(ok=False)
+
+    def _process_file(
+        self,
+        filepath: Path,
+        processor_class: type[DefFormatter] | type[DefChecker],
+    ) -> tuple[cst.Module | None, list[BaseDefFormException]]:
+        code: str | None = self._read(filepath)
+
+        if code is None:
             return None, []
+
+        result = self._process_code(code, filepath, processor_class)
+        return result.module, result.issues
+
+    def _load_source(self, path: Path) -> tuple[str, str] | None:
+        """Returns the file content together with its digest, or None when it cannot be read."""
+        code: str | None = self._read(path)
+
+        if code is None:
+            return None
+
+        return code, DefCache.compute_digest(code)
 
     def _write(
         self,
@@ -214,46 +277,87 @@ class DefManager:
     # --------------------------------------------------------------------- #
 
     def format(self) -> None:
+        self._show_config()
         self.issues.clear()
         files = list(self._iter_py_files())
 
         self.ui.start(total=len(files))
 
+        cached = 0
+
         for path in files:
+            source = self._load_source(path)
+
+            if source is not None and self.cache.is_fresh(path, source[1]):
+                cached += 1
+                self.ui.cached(path)
+                continue
+
             self.ui.processing(path)
 
-            new_tree, file_issues = self._process_file(
-                path,
-                self.formatter_class,
-            )
+            if source is None:
+                continue
 
-            self.issues.extend(file_issues)
+            code, digest = source
+            result = self._process_code(code, path, self.formatter_class)
 
-            if new_tree is not None:
+            self.issues.extend(result.issues)
+
+            if result.module is None:
+                continue
+
+            if result.module.code != code:
+                self.cache.discard(path)
                 self._write(
                     dest=path,
-                    module=new_tree.code,
+                    module=result.module.code,
                 )
+                continue
 
-        self.ui.finish(len(files), self.issues)
+            if not result.issues:
+                self.cache.store(path, digest)
+
+        self.cache.save()
+        self.ui.finish(len(files) - cached, self.issues, cached=cached)
 
     def check(self) -> None:
+        self._show_config()
         self.issues.clear()
         files = list(self._iter_py_files())
 
         self.ui.start(total=len(files))
 
+        cached = 0
+
         for path in files:
+            source = self._load_source(path)
+
+            if source is not None and self.cache.is_fresh(path, source[1]):
+                cached += 1
+                self.ui.cached(path)
+                continue
+
             self.ui.processing(path)
 
-            _, file_issues = self._process_file(
-                path,
-                self.checker_class,
-            )
+            if source is None:
+                continue
 
-            self.issues.extend(file_issues)
+            code, digest = source
+            result = self._process_code(code, path, self.checker_class)
 
-        self.ui.finish(len(files), self.issues)
+            self.issues.extend(result.issues)
+
+            if result.ok and not result.issues:
+                self.cache.store(path, digest)
+            else:
+                self.cache.discard(path)
+
+        self.cache.save()
+        self.ui.finish(len(files) - cached, self.issues, cached=cached)
 
         if self.issues:
             raise CheckCommandFoundAnIssue(str(self.path), 'check command did found an issue')
+
+    def clean(self) -> bool:
+        """Drops the whole cache directory; False means there was nothing to remove"""
+        return self.cache.clear()

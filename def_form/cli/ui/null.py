@@ -18,11 +18,29 @@ class NullUI(BaseUI):
     def skipped(self, path: Path) -> None:
         return
 
-    def finish(self, processed: int, issues: list[BaseDefFormException]) -> None:
+    def cached(self, path: Path) -> None:
         return
 
-    def show_issues(self, processed: int, issues: list[BaseDefFormException]) -> None:
+    def finish(
+        self,
+        processed: int,
+        issues: list[BaseDefFormException],
+        cached: int = 0,
+    ) -> None:
         return
 
-    def show_summary(self, processed: int, issues: list[BaseDefFormException]) -> None:
+    def show_issues(
+        self,
+        processed: int,
+        issues: list[BaseDefFormException],
+        cached: int = 0,
+    ) -> None:
+        return
+
+    def show_summary(
+        self,
+        processed: int,
+        issues: list[BaseDefFormException],
+        cached: int = 0,
+    ) -> None:
         return

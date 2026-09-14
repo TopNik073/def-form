@@ -15,8 +15,8 @@ def test_format_case(
     case_manager: DefManager,
     case_expected_issues: list[tuple[int, str]],
     case_expected_content: str | None,
-):
-    def capture_write(dest, module: str):
+) -> None:
+    def capture_write(dest: str | Path, module: str) -> None:
         pass
 
     with patch.object(case_manager, '_write', side_effect=capture_write) as mocked_write:
@@ -27,6 +27,14 @@ def test_format_case(
         f'case_id={case_id}: expected issues {case_expected_issues}, got {got_issues}'
     )
 
-    if case_expected_content is not None:
-        mocked_write.assert_called_once()
-        assert mocked_write.call_args[1]['module'].strip() == case_expected_content.strip()
+    if case_expected_content is None:
+        return
+
+    source_content = (case_dir / 'source.py').read_text(encoding='utf-8')
+
+    if source_content == case_expected_content:
+        mocked_write.assert_not_called()
+        return
+
+    mocked_write.assert_called_once()
+    assert mocked_write.call_args[1]['module'].strip() == case_expected_content.strip()

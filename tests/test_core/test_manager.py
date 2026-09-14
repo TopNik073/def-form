@@ -14,6 +14,19 @@ def _make_manager(path: str = '.', config: str | None = None, excluded: tuple[st
     return DefManager(path=path, ui=ui, config=config, excluded=excluded or ())
 
 
+def _make_pyproject(tmp_path: Path, extra: str = '') -> str:
+    pyproject = tmp_path / 'pyproject.toml'
+    pyproject.write_text(
+        '[tool.def-form]\n'
+        'max_def_length = 88\n'
+        'max_inline_args = 3\n'
+        'indent_size = 2\n'
+        f'{extra}',
+        encoding='utf-8',
+    )
+    return str(pyproject)
+
+
 def test_init_config_with_no_config_keeps_defaults(tmp_path: Path) -> None:
     with patch('def_form.core.manager.find_pyproject_toml', return_value=None):
         m = _make_manager(path=str(tmp_path), config=None)
@@ -150,3 +163,96 @@ def test_write_on_os_error_calls_ui_error(tmp_path: Path) -> None:
         m._write(tmp_path / 'out.py', 'code')
     ui.console.error.assert_called_once()
     assert 'Exception occurred' in str(ui.console.error.call_args[0][0])
+
+
+def test_cli_values_win_over_pyproject(tmp_path: Path) -> None:
+    config = _make_pyproject(tmp_path)
+    ctx = CLIContext()
+    ui = NullUI(console=NullConsole(context=ctx))
+
+    with patch('def_form.core.manager.find_pyproject_toml', return_value=None):
+        m = DefManager(
+            path=str(tmp_path),
+            ui=ui,
+            config=config,
+            max_def_length=120,
+            max_inline_args=1,
+            indent_size=8,
+        )
+
+    assert m.max_def_length == 120
+    assert m.max_inline_args == 1
+    assert m.indent_size == 8
+
+
+def test_pyproject_used_for_options_not_given_on_cli(tmp_path: Path) -> None:
+    config = _make_pyproject(tmp_path)
+    ctx = CLIContext()
+    ui = NullUI(console=NullConsole(context=ctx))
+
+    with patch('def_form.core.manager.find_pyproject_toml', return_value=None):
+        m = DefManager(path=str(tmp_path), ui=ui, config=config, max_def_length=120)
+
+    assert m.max_def_length == 120
+    assert m.max_inline_args == 3
+    assert m.indent_size == 2
+
+
+def test_no_cache_flag_wins_over_enabled_config(tmp_path: Path) -> None:
+    config = _make_pyproject(tmp_path, extra='cache = true\n')
+    ctx = CLIContext()
+    ui = NullUI(console=NullConsole(context=ctx))
+
+    with patch('def_form.core.manager.find_pyproject_toml', return_value=None):
+        m = DefManager(path=str(tmp_path), ui=ui, config=config, cache=False)
+
+    assert m.use_cache is False
+
+
+def test_cache_defaults_to_enabled_without_config(tmp_path: Path) -> None:
+    with patch('def_form.core.manager.find_pyproject_toml', return_value=None):
+        m = _make_manager(path=str(tmp_path), config=None)
+
+    assert m.use_cache is True
+
+
+def test_cache_can_be_disabled_from_pyproject(tmp_path: Path) -> None:
+    config = _make_pyproject(tmp_path, extra='cache = false\n')
+    ctx = CLIContext()
+    ui = NullUI(console=NullConsole(context=ctx))
+
+    with patch('def_form.core.manager.find_pyproject_toml', return_value=None):
+        m = DefManager(path=str(tmp_path), ui=ui, config=config)
+
+    assert m.use_cache is False
+
+
+def test_malformed_config_section_is_ignored(tmp_path: Path) -> None:
+    pyproject = tmp_path / 'pyproject.toml'
+    pyproject.write_text('[tool]\ndef-form = "nope"\n', encoding='utf-8')
+
+    with patch('def_form.core.manager.find_pyproject_toml', return_value=None):
+        m = _make_manager(path=str(tmp_path), config=str(pyproject))
+
+    assert m.max_def_length is None
+    assert m._config_excluded == []
+
+
+def test_non_list_exclude_is_ignored(tmp_path: Path) -> None:
+    config = _make_pyproject(tmp_path, extra='exclude = "venv"\n')
+
+    with patch('def_form.core.manager.find_pyproject_toml', return_value=None):
+        m = _make_manager(path=str(tmp_path), config=config)
+
+    assert m._config_excluded == []
+
+
+def test_broken_toml_is_ignored(tmp_path: Path) -> None:
+    pyproject = tmp_path / 'pyproject.toml'
+    pyproject.write_text('[tool.def-form\nbroken', encoding='utf-8')
+
+    with patch('def_form.core.manager.find_pyproject_toml', return_value=None):
+        m = _make_manager(path=str(tmp_path), config=str(pyproject))
+
+    assert m.max_def_length is None
+    assert m.use_cache is True

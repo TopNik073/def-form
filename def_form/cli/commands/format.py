@@ -18,6 +18,7 @@ def format(  # noqa: PLR0913
     config: str | None,
     exclude: tuple[str, ...],
     show_skipped: bool,
+    no_cache: bool,
 ) -> None:
     context.show_skipped = show_skipped
     console = RichConsole(context=context)
@@ -33,6 +34,7 @@ def format(  # noqa: PLR0913
             indent_size=indent_size,
             config=config,
             show_skipped=show_skipped,
+            cache=False if no_cache else None,
             ui=RichUI(console=console),
         ).format()
     except Exception as exc:

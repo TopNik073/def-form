@@ -1,3 +1,6 @@
+from pathlib import Path
+from typing import Any
+
 import pytest
 
 from def_form.cli.console import NullConsole
@@ -17,8 +20,9 @@ CASE_IDS = [name for name, _ in _cases]
 CASE_DIR_BY_ID = {name: path for name, path in _cases}
 
 
-def _manager_kwargs(path: str) -> dict:
+def _manager_kwargs(path: str) -> dict[str, Any]:
     return {
+        'cache': False,
         'config': '/nonexistent',
         'excluded': (),
         'max_def_length': MAX_DEF_LENGTH,
@@ -34,22 +38,22 @@ def case_id(request: pytest.FixtureRequest) -> str:
 
 
 @pytest.fixture
-def case_dir(case_id: str):
+def case_dir(case_id: str) -> Path:
     return CASE_DIR_BY_ID[case_id]
 
 
 @pytest.fixture
-def case_source_path(case_dir) -> str:
+def case_source_path(case_dir: Path) -> str:
     return str(case_dir / 'source.py')
 
 
 @pytest.fixture
-def case_expected_issues(case_dir):
+def case_expected_issues(case_dir: Path) -> list[tuple[int, str]]:
     return load_expected_issues(case_dir)
 
 
 @pytest.fixture
-def case_expected_content(case_dir) -> str | None:
+def case_expected_content(case_dir: Path) -> str | None:
     return load_expected_content(case_dir)
 
 

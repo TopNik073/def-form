@@ -11,7 +11,7 @@ class DefChecker(DefBase, CSTVisitor):
         max_def_length: int | None,
         max_inline_args: int | None,
         indent_size: int | None,
-    ):
+    ) -> None:
         super().__init__(
             filepath=filepath,
             max_def_length=max_def_length,

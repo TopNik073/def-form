@@ -36,6 +36,10 @@ def show_skipped_option(func: Callable) -> Callable:
     return click.option('--show-skipped', is_flag=True, default=False, help='Show skipped files and directories')(func)
 
 
+def no_cache_option(func: Callable) -> Callable:
+    return click.option('--no-cache', is_flag=True, default=False, help='Process every file, ignoring the cache')(func)
+
+
 def common_options(func: Callable) -> Callable:
     func = path_option(func)
     func = max_def_length_option(func)
@@ -43,4 +47,5 @@ def common_options(func: Callable) -> Callable:
     func = indent_size_option(func)
     func = exclude_option(func)
     func = show_skipped_option(func)
+    func = no_cache_option(func)
     return config_option(func)

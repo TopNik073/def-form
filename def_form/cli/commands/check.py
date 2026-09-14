@@ -5,7 +5,7 @@ from def_form.cli.console import RichConsole
 from def_form.cli.context import context
 from def_form.cli.errors import CheckFailedError
 from def_form.cli.ui.rich import RichUI
-from def_form.exceptions.base import BaseDefFormException
+from def_form.exceptions.def_formatter import CheckCommandFoundAnIssue
 from def_form.core import DefManager
 
 
@@ -19,6 +19,7 @@ def check(  # noqa: PLR0913
     config: str | None,
     exclude: tuple[str, ...],
     show_skipped: bool,
+    no_cache: bool,
 ) -> None:
     console = RichConsole(context=context)
     console.info(f'Checking [bold]{path}[/bold]')
@@ -32,9 +33,10 @@ def check(  # noqa: PLR0913
             indent_size=indent_size,
             config=config,
             show_skipped=show_skipped,
+            cache=False if no_cache else None,
             ui=RichUI(console=console),
         ).check()
-    except BaseDefFormException as exc:
+    except CheckCommandFoundAnIssue as exc:
         raise CheckFailedError('Code style violations found') from exc
     except Exception as exc:
         raise CheckFailedError(str(exc)) from exc

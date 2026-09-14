@@ -192,6 +192,9 @@ cython_debug/
 # Ruff stuff:
 .ruff_cache/
 
+# def-form stuff:
+.def_form_cache/
+
 # PyPI configuration file
 .pypirc
 

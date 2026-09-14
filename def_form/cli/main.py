@@ -4,6 +4,7 @@ from def_form.cli.console import RichConsole
 from def_form.cli.context import context
 from def_form.cli.errors import CLIError
 from def_form.cli.commands.check import check
+from def_form.cli.commands.clean import clean
 from def_form.cli.commands.format import format
 
 console = RichConsole(context=context)
@@ -19,6 +20,7 @@ def cli(verbose: bool, quiet: bool) -> None:
 
 cli.add_command(check)
 cli.add_command(format)
+cli.add_command(clean)
 
 
 def main() -> None:

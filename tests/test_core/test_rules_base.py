@@ -1,12 +1,13 @@
 import pytest
 
 from def_form.core.rules.base import Rule
+from def_form.exceptions.base import BaseDefFormException
 from def_form.core.rules.context import RuleContext
 
 
 def test_rule_check_raises_not_implemented() -> None:
     class StubRule(Rule):
-        def check(self, context: RuleContext):
+        def check(self, context: RuleContext) -> list[BaseDefFormException]:
             return super().check(context)
 
     rule = StubRule()
