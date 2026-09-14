@@ -202,7 +202,7 @@ class RichUI(BaseUI):
 
             self.console.print()
 
-        self.show_summary(processed, issues, cached=cached)
+        self.show_summary(processed, issues, cached)
 
     def show_summary(
         self,
