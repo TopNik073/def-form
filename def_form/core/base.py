@@ -7,6 +7,7 @@ from libcst import FunctionDef
 from libcst import MetadataDependent
 from libcst import Module
 from libcst import Param
+from libcst import ParamStar
 from libcst import ParenthesizedWhitespace
 from libcst import SimpleWhitespace
 from libcst.matchers import BaseParenthesizableWhitespace
@@ -82,7 +83,9 @@ class DefBase(MetadataDependent):
         if ws.last_line.value != expected_indent:
             return False
 
-        all_params = get_params_list(node)
+        all_params: list[Param | ParamStar] = list(get_params_list(node))
+        if isinstance(node.params.star_arg, ParamStar):
+            all_params.insert(len(node.params.params), node.params.star_arg)
 
         if not all_params:
             return True

@@ -4,6 +4,7 @@ from libcst import Comma, MaybeSentinel
 from libcst import Comment
 from libcst import FunctionDef
 from libcst import Param
+from libcst import ParamStar
 from libcst import Parameters
 from libcst import ParenthesizedWhitespace
 from libcst import SimpleWhitespace
@@ -125,11 +126,23 @@ def build_parameters(
         format_param = lambda p, last: _create_formatted_param_for_multi_line(indent_size, p, last)
     formatted_params = [format_param(param, i == total_params - 1) for i, param in enumerate(all_params)]
     new_params, new_kwonly_params, new_star_arg, new_star_kwarg = _restore_param_groups(formatted_params, node)
+    star_arg: Param | ParamStar | MaybeSentinel = new_star_arg if new_star_arg is not None else MaybeSentinel.DEFAULT
+    if isinstance(node.params.star_arg, ParamStar):
+        comma = node.params.star_arg.comma
+        whitespace = comma.whitespace_after
+        last_line = SimpleWhitespace(' ' * indent_size)
+        if isinstance(whitespace, ParenthesizedWhitespace):
+            whitespace = whitespace.with_changes(indent=True, last_line=last_line)
+        else:
+            whitespace = ParenthesizedWhitespace(indent=True, last_line=last_line)
+        star_arg = node.params.star_arg.with_changes(
+            comma=comma.with_changes(whitespace_after=whitespace),
+        )
     params = Parameters(
         params=new_params,
         posonly_params=node.params.posonly_params,
         kwonly_params=new_kwonly_params,
-        star_arg=new_star_arg if new_star_arg is not None else MaybeSentinel.DEFAULT,
+        star_arg=star_arg,
         star_kwarg=new_star_kwarg,
     )
     whitespace_before_params = ParenthesizedWhitespace(
