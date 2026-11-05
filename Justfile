@@ -24,6 +24,7 @@ fix:
 
 tests:
     uv run pytest \
+        -vv \
         --cov=def_form \
         --cov-report=lcov:tests.lcov \
         --cov-report=term \

@@ -349,3 +349,35 @@ def test_rich_ui_show_summary_includes_cache_row() -> None:
     output = buffer.getvalue()
     assert 'Files from cache' in output
     assert '7' in output
+
+
+@pytest.mark.parametrize(
+    ('paths', 'expected_files', 'expected_rate'),
+    [
+        ([r'C:\project\a.py:1', r'C:\project\b.py:2'], 2, '0.0%'),
+        ([r'C:\project\a.py:1', r'D:\project\b.py:2'], 2, '0.0%'),
+        (['/project/a.py:1', '/project/b.py:2'], 2, '0.0%'),
+        ([r'C:\project\a.py:1', r'C:\project\a.py:2'], 1, '50.0%'),
+        (['/project/a.py:1', '/project/a.py:2'], 1, '50.0%'),
+        ([r'C:\project\a.py', r'C:\project\b.py'], 2, '0.0%'),
+        (['/project/pkg:a/file.py:1', '/project/pkg:b/file.py:2'], 2, '0.0%'),
+    ],
+)
+def test_rich_ui_counts_issue_files_and_success_rate(
+    paths: list[str],
+    expected_files: int,
+    expected_rate: str,
+) -> None:
+    buffer = StringIO()
+    ui = RichUI(console=RichConsole(context=CLIContext(), file=buffer, force_terminal=False, width=200))
+    issues = [TooManyInlineArgumentsException(path=path, message='example') for path in paths]
+
+    ui.show_issues(processed=2, issues=issues)
+
+    output = buffer.getvalue()
+    assert f'Found 2 errors in {expected_files} files' in output
+    rows = [line.split() for line in output.splitlines()]
+    assert ['Files', 'processed:', '2'] in rows
+    assert ['Files', 'with', 'issues:', str(expected_files)] in rows
+    assert ['Total', 'errors:', '2'] in rows
+    assert ['Success', 'rate:', expected_rate] in rows

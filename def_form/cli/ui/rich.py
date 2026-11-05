@@ -26,7 +26,8 @@ class RichUI(BaseUI):
         self.task_id: int | None = None
         self.current_file: Path | None = None
 
-    def _convert_to_string(self, value: Any) -> str:
+    @staticmethod
+    def _convert_to_string(value: Any) -> str:
         if isinstance(value, Path):
             return str(value.relative_to(Path.cwd()))
 
@@ -34,6 +35,11 @@ class RichUI(BaseUI):
             return 'Yes' if value else 'No'
 
         return str(value)
+
+    @staticmethod
+    def _issue_filepath(path: str) -> str:
+        filepath, separator, line = path.rpartition(':')
+        return filepath if separator and line.isdecimal() else path
 
     def show_config_info(self, **config: Any) -> None:
         if not self.context.should_output:
@@ -169,7 +175,7 @@ class RichUI(BaseUI):
         if not self.context.should_output:
             return
 
-        unique_files = {issue.path.split(':')[0] for issue in issues}
+        unique_files = {self._issue_filepath(issue.path) for issue in issues}
 
         if issues:
             self.console.print('\n')
@@ -213,7 +219,7 @@ class RichUI(BaseUI):
         if not self.context.should_output:
             return
 
-        unique_files = {issue.path.split(':')[0] for issue in issues}
+        unique_files = {self._issue_filepath(issue.path) for issue in issues}
 
         summary = Table(title='[yellow]Summary[/yellow]', box=box.HORIZONTALS, show_header=False, border_style='dim')
         summary.add_column(style='bold')

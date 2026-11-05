@@ -23,10 +23,18 @@ jobs:
       - run: just ${{ matrix.just-trigger }}
 
   tests:
-    runs-on: ubuntu-latest
+    name: tests (${{ matrix.os }}, Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    env:
+      UV_PYTHON: ${{ matrix.python-version }}
     strategy:
+      fail-fast: false
       matrix:
+        os: [ ubuntu-latest ]
         python-version: [ "3.10", "3.11", "3.12", "3.13", "3.14" ]
+        include:
+          - os: windows-latest
+            python-version: "3.13"
     steps:
       - uses: actions/checkout@v4
       - uses: extractions/setup-just@v2
@@ -39,7 +47,7 @@ jobs:
         run: just tests
 
       - name: Upload coverage to Coveralls
-        if: matrix.python-version == '3.12'
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
         uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
